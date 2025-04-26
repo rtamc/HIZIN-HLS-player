@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Gemini 스타일 HLS 스트리밍 플레이어</title>
+  <link href="https://vjs.zencdn.net/7.19.2/video-js.css" rel="stylesheet" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+    :root {
+      --text-color: #E3E3E3;
+      --subheading-color: #828282;
+      --primary-color: #242424;
+      --secondary-color: #383838;
+      --accent-gradient: linear-gradient(to right, #4285f4, #d96570);
+    }
+    body {
+      background: var(--primary-color);
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text-color);
+    }
+    .header {
+      margin: 6vh auto 2vh auto;
+      max-width: 700px;
+      text-align: center;
+    }
+    .header .title {
+      font-size: 2.5rem;
+      font-weight: 600;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header .subtitle {
+      font-size: 1.2rem;
+      color: var(--subheading-color);
+      margin-top: 0.5rem;
+    }
+    .input-box {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .input-box input {
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: none;
+      width: 320px;
+      font-size: 1rem;
+    }
+    .input-box button {
+      background: var(--accent-gradient);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 18px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .video-container {
+      background: var(--secondary-color);
+      border-radius: 1rem;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.2);
+      padding: 2rem;
+      margin: 30px auto 0 auto;
+      max-width: 800px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .video-js {
+      width: 640px;
+      height: 360px;
+      border-radius: 0.75rem;
+      background: #000;
+    }
+  </style>
+  <!-- Video.js 및 hls.js -->
+  <script src="https://vjs.zencdn.net/7.19.2/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="title">HIZIN HLS MEDIA PLAYER</div>
+    <div class="subtitle">HLS(.m3u8) 링크를 입력하면 실시간 영상을 볼 수 있습니다</div>
+  </div>
+  <div class="input-box">
+    <input type="text" id="hlsUrl" placeholder="http(s)://.../output.m3u8">
+    <button onclick="playStream()">스트리밍 시작</button>
+  </div>
+  <div class="video-container">
+    <video id="hls-video" class="video-js vjs-big-play-centered" controls preload="auto" muted autoplay poster="" data-setup='{"autoplay": true, "muted": true, "controlBar": {"playToggle": true, "volumePanel": true, "fullscreenToggle": true}}'></video>
+  </div>
+
+  <script>
+    let player = videojs('hls-video', {
+      autoplay: true,
+      muted: true,
+      controls: true,
+      controlBar: {
+        playToggle: true,
+        volumePanel: true,
+        fullscreenToggle: true,
+        progressControl: false, // 재생 바 제거
+      },
+    });
+
+    function playStream() {
+      const url = document.getElementById('hlsUrl').value.trim();
+      if (!url.endsWith('.m3u8')) {
+        alert('올바른 HLS(.m3u8) 주소를 입력하세요.');
+        return;
+      }
+      if (Hls.isSupported()) {
+        if (window.hls) {
+          window.hls.destroy();
+        }
+        window.hls = new Hls();
+        window.hls.loadSource(url);
+        window.hls.attachMedia(player.tech().el_);
+        window.hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          player.play();
+        });
+      } else if (player.tech().el_.canPlayType('application/vnd.apple.mpegurl')) {
+        player.src({ src: url, type: 'application/x-mpegURL' });
+        player.ready(function() {
+          player.play();
+        });
+      } else {
+        alert('이 브라우저는 HLS를 지원하지 않습니다.');
+      }
+    }
+  </script>
+</body>
+</html>

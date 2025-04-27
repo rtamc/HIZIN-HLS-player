@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>HLS 스트리밍 플레이어</title>
   <link href="https://vjs.zencdn.net/7.19.2/video-js.css" rel="stylesheet" />
   <style>
@@ -79,6 +79,7 @@
       background: #000;
     }
   </style>
+  <!-- Video.js 및 hls.js -->
   <script src="https://vjs.zencdn.net/7.19.2/video.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
@@ -88,7 +89,7 @@
     <div class="subtitle">HLS(.m3u8) 링크를 입력하면 실시간 영상을 볼 수 있습니다</div>
   </div>
   <div class="input-box">
-    <input type="text" id="hlsUrl" placeholder="https://.../output.m3u8">
+    <input type="text" id="hlsUrl" placeholder="http(s)://.../output.m3u8">
     <button onclick="playStream()">스트리밍 시작</button>
   </div>
   <div class="video-container">
@@ -115,24 +116,27 @@
         return;
       }
 
-      // HTTPS로만 요청하도록 설정
-      if (!url.startsWith('https://')) {
-        alert('HTTPS로만 HLS 스트리밍을 요청할 수 있습니다.');
+      // HTTP/HTTPS URL을 지원
+      const isHttp = url.startsWith("http://");
+      const isHttps = url.startsWith("https://");
+
+      // Mixed Content 방지 - HTTP로 제공되는 페이지에서 HTTP 리소스를 요청할 경우 경고
+      if (location.protocol === 'https:' && isHttp) {
+        alert('이 페이지는 HTTPS로 제공되므로, HTTP URL을 사용할 수 없습니다. HTTPS URL을 입력하세요.');
         return;
       }
 
-      // HLS.js가 지원되는 경우
       if (Hls.isSupported()) {
         if (window.hls) {
           window.hls.destroy();
         }
         window.hls = new Hls();
         window.hls.loadSource(url);
-        window.hls.attachMedia(player.el());  // 'tech().el_' 대신 'el()' 사용
+        window.hls.attachMedia(player.tech().el_);
         window.hls.on(Hls.Events.MANIFEST_PARSED, function() {
           player.play();
         });
-      } else if (player.el().canPlayType('application/vnd.apple.mpegurl')) {  // 'tech().el_' 대신 'el()' 사용
+      } else if (player.tech().el_.canPlayType('application/vnd.apple.mpegurl')) {
         player.src({ src: url, type: 'application/x-mpegURL' });
         player.ready(function() {
           player.play();
